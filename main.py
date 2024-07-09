@@ -23,22 +23,20 @@ def peliculas_estrenadas_por_dia(nombre_dia):
     try:
         df = cargar_csv('movies_dataset.csv')  # Cargar el archivo de películas
         
-        nombre_dia = nombre_dia.lower().strip()
-        df['release_day_of_week_limpio'] = df['release_day_of_week'].str.lower().str.strip().str.replace(',', '')
+        nombre_dia = nombre_dia.lower()
         
         # Validar que el día ingresado sea válido
-        dias_semana = df['release_day_of_week_limpio'].unique()
+        dias_semana = df['release_day_of_week'].str.lower().unique()
         if nombre_dia not in dias_semana:
             raise HTTPException(status_code=400, detail=f'Error: "{nombre_dia}" no es un día válido. Por favor, ingrese un día válido en español.')
 
         # Filtrar las películas estrenadas en el día especificado
-        count = df[df['release_day_of_week_limpio'] == nombre_dia].shape[0]
+        count = df[df['release_day_of_week'].str.lower() == nombre_dia].shape[0]
         
         return {'message': f'{count} películas fueron estrenadas el día {nombre_dia}'}
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-    
 
 def peliculas_estrenadas_por_mes(nombre_mes):
     try:
