@@ -194,7 +194,11 @@ def get_recommendations(movie_name: str):
         vectorizer = TfidfVectorizer(stop_words='english')
         tfidf_matrix = vectorizer.fit_transform(df['combined_features'])
 
-        reference_index = df[df['title'] == movie_name].index
+        # Convertir a minúsculas para comparación insensible a mayúsculas y minúsculas
+        movie_name_lower = movie_name.lower()
+        df['title_lower'] = df['title'].str.lower()
+
+        reference_index = df[df['title_lower'] == movie_name_lower].index
         if not reference_index.empty:
             reference_index = reference_index[0]
         else:
