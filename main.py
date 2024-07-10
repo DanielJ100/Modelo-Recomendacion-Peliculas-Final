@@ -179,40 +179,43 @@ def director_info(nombre_persona):
         raise HTTPException(status_code=500, detail=str(e))
     
   
-def get_recommendations(reference_movie: str):
+def get_recommendations(movie_name: str):
     try:
         df = cargar_csv("Modelof.csv")
-        
-        # Limpieza de NaN y concatenación de columnas
-        df['Data'] = (df['genero'].fillna('').astype(str) + ' ' +
-                      df['director'].fillna('').astype(str) + ' ' +
-                      df['Actor_principal'].fillna('').astype(str))
-        
+
+        # Rellenar valores nulos y asegurar que las columnas sean de tipo string
+        df['genero'] = df['genero'].fillna('').astype(str)
+        df['director'] = df['director'].fillna('').astype(str)
+        df['Actor_principal'] = df['Actor_principal'].fillna('').astype(str)
+
+        # Crear la columna 'combined_features' combinando 'genero', 'director' y 'Actor_principal'
+        df['combined_features'] = df['genero'] + ' ' + df['director'] + ' ' + df['Actor_principal']
+
         vectorizer = TfidfVectorizer(stop_words='english')
-        tfidf_matrix = vectorizer.fit_transform(df['Data'])
-        
-        reference_index = df[df['title'] == reference_movie].index
+        tfidf_matrix = vectorizer.fit_transform(df['combined_features'])
+
+        reference_index = df[df['title'] == movie_name].index
         if not reference_index.empty:
             reference_index = reference_index[0]
         else:
-            raise ValueError(f"No se encontró la película '{reference_movie}' en el DataFrame.")
-        
-        similarities = cosine_similarity(tfidf_matrix[reference_index], tfidf_matrix)
+            raise ValueError(f"No se encontró la película '{movie_name}' en el DataFrame.")
+
+        similarities = cosine_similarity(tfidf_matrix[reference_index], tfidf_matrix).flatten()
         similar_movies_indices = similarities.argsort()[::-1][1:6]  # Excluye la película de referencia
         recommended_movies = df.iloc[similar_movies_indices]['title'].tolist()
-        
+
         return {
-            'message': f"Películas recomendadas para '{reference_movie}':",
+            'message': f"Películas recomendadas para '{movie_name}':",
             'recommended_movies': recommended_movies
         }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))  
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get("/recommendations/")
-def get_movie_recommendations(reference_movie:str):
+def get_movie_recommendations(movie_name:str):
     try:
-        recommendations = get_recommendations(reference_movie)
+        recommendations = get_recommendations(movie_name)
         return recommendations
     except Exception as e:
         return {'error': e.detail} 
