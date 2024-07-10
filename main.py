@@ -178,7 +178,7 @@ def director_info(nombre_persona):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     
-def get_recommendations(reference_movie):
+def get_recommendations(reference_movie:str):
     try:
         df = cargar_csv("Modelof.csv")
         vectorizer = TfidfVectorizer(stop_words='english')
@@ -203,20 +203,17 @@ def get_recommendations(reference_movie):
             'recommended_movies': recommended_movies
         }
     except Exception as e:
-        raise Exception(f"Error al obtener recomendaciones: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 
-class MovieRequest(BaseModel):
-    movie_name: str
-
-@app.post("/recommendations/")
-def get_movie_recommendations(request: MovieRequest):
+@app.get("/recommendations/")
+def get_movie_recommendations(reference_movie:str):
     try:
-        recommendations = get_recommendations(request.movie_name)
+        recommendations = get_recommendations(reference_movie)
         return recommendations
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        return {'error': e.detail} 
 
     
 
