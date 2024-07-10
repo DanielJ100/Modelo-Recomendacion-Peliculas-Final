@@ -180,7 +180,7 @@ def director_info(nombre_persona):
     
 def get_recommendations(reference_movie):
     try:
-        df = cargar_csv("Modelo.csv")
+        df = cargar_csv("Modelof.csv")
         vectorizer = TfidfVectorizer(stop_words='english')
         Data = df['genero'] + ' ' + df['director'] + ' ' + df['Actor_principal']
         tfidf_matrix = vectorizer.fit_transform(Data)
