@@ -178,28 +178,27 @@ def director_info(nombre_persona):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     
-    
+  
 def get_recommendations(reference_movie: str):
     try:
         df = cargar_csv("Modelof.csv")
         
-        # Concatenar columnas 'genero', 'director', 'Actor_principal' en una columna 'Data'
-        df['Data'] = df['genero'] + ' ' + df['director'] + ' ' + df['Actor_principal']
+        # Limpieza de NaN y concatenación de columnas
+        df['Data'] = (df['genero'].fillna('').astype(str) + ' ' +
+                      df['director'].fillna('').astype(str) + ' ' +
+                      df['Actor_principal'].fillna('').astype(str))
         
-        # Verificar que 'reference_movie' esté en el DataFrame
-        if reference_movie not in df['title'].values:
-            raise ValueError(f"No se encontró la película '{reference_movie}' en el DataFrame.")
-        
-        # Inicializar el vectorizador TF-IDF
         vectorizer = TfidfVectorizer(stop_words='english')
         tfidf_matrix = vectorizer.fit_transform(df['Data'])
         
-        # Obtener el índice de la película de referencia
-        reference_index = df[df['title'] == reference_movie].index[0]
+        reference_index = df[df['title'] == reference_movie].index
+        if not reference_index.empty:
+            reference_index = reference_index[0]
+        else:
+            raise ValueError(f"No se encontró la película '{reference_movie}' en el DataFrame.")
         
-        # Calcular las similitudes coseno
         similarities = cosine_similarity(tfidf_matrix[reference_index], tfidf_matrix)
-        similar_movies_indices = similarities.argsort()[::-1][1:6]  # Excluir la película de referencia
+        similar_movies_indices = similarities.argsort()[::-1][1:6]  # Excluye la película de referencia
         recommended_movies = df.iloc[similar_movies_indices]['title'].tolist()
         
         return {
@@ -207,8 +206,7 @@ def get_recommendations(reference_movie: str):
             'recommended_movies': recommended_movies
         }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))    
-
+        raise HTTPException(status_code=500, detail=str(e))  
 
 
 @app.get("/recommendations/")
